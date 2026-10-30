@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root{--navy:#0f172a;--blue:#2563eb;--teal:#0d9488;--bg:#f8fafc;--line:#e2e8f0;--text:#334155;--muted:#64748b}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font:14px Inter,System-UI,Arial,sans-serif}
+    header{background:linear-gradient(135deg,#0f172a,#1e293b);color:white;padding:22px max(18px,calc((100% - 1200px)/2));box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+    header h1{margin:0 0 6px;font-size:22px;font-weight:700;letter-spacing:-0.5px}
+    header p{margin:0;color:#94a3b8;font-size:13px}
+    main{max-width:1200px;margin:22px auto;padding:0 16px}
+    .tabs,.toolbar,.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+    button{border:0;border-radius:6px;padding:9px 14px;background:var(--blue);color:white;font-weight:600;font-size:13px;cursor:pointer;transition:background 0.2s}
+    button:hover{opacity:0.92}
+    button.secondary{background:#e2e8f0;color:#1e293b}
+    button.teal{background:var(--teal)}button.red{background:#dc2626}
+    input,select,textarea{width:100%;padding:9px 12px;border:1px solid #cbd5e1;border-radius:6px;background:white;font:inherit;color:#0f172a}
+    textarea{min-height:75px;resize:vertical}
+    label{font-size:12px;font-weight:600;color:#475467}
+    .field{display:flex;flex-direction:column;gap:5px}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    .full{grid-column:1/-1}
+    .panel{background:white;border:1px solid var(--line);border-radius:10px;padding:20px;margin-bottom:18px;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+    .panel h2{font-size:17px;margin:0 0 14px;font-weight:700;color:#0f172a}
+    .info-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:14px;margin-bottom:16px;color:#1e40af;line-height:1.5;font-size:13px}
+    .reason-box{background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:12px;margin:12px 0;color:#991b1b;font-size:13px;line-height:1.4}
+    .resubmit-panel{background:#fffbebf0;border:1px solid #fef08a;border-radius:8px;padding:16px;margin-top:16px}
+    .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:16px 0}
+    .stat{background:white;border:1px solid var(--line);border-radius:8px;padding:14px 18px}
+    .stat span{display:block;color:var(--muted);font-size:12px;font-weight:500}.stat strong{display:block;font-size:24px;color:var(--navy);margin-top:4px}
+    
+    .cert-card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:6px}
+    .cert-card{background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;justify-content:space-between;gap:8px}
+    .cert-card.selected{border-color:#2563eb;background:#eff6ff}
+    .badge{display:inline-block;padding:3px 7px;border-radius:4px;font-size:11px;font-weight:600;background:#e2e8f0;color:#334155}
+    .badge.urgent{background:#fee2e2;color:#991b1b}
+    .badge.timely{background:#dcfce7;color:#166534}
+
+    .table-container{overflow-x:auto;background:white;border:1px solid var(--line);border-radius:8px;margin-top:10px}
+    table.data-table{width:100%;border-collapse:collapse;text-align:left;font-size:13px}
+    table.data-table th{background:#f1f5f9;color:#475569;font-weight:600;padding:11px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+    table.data-table td{padding:12px 14px;border-bottom:1px solid #f1f5f9;vertical-align:top}
+    table.data-table tr:hover{background:#f8fafc}
+    
+    .status{display:inline-block;border-radius:12px;padding:3px 9px;background:#e2e8f0;font-size:11px;font-weight:600}
+    .good{background:#dcfce7;color:#15803d}.bad{background:#fee2e2;color:#b91c1c}.warn{background:#fef3c7;color:#b45309}
+    .notice{padding:12px;border-radius:8px;margin-bottom:14px;line-height:1.5;font-size:13px}
+    .error{background:#fee2e2;color:#991b1b}.success{background:#dcfce7;color:#166534}
+    .hidden{display:none!important}.search{max-width:320px}
+    .modalbg{position:fixed;inset:0;background:rgba(15,23,42,0.6);display:flex;align-items:center;justify-content:center;padding:15px;z-index:100}
+    .modal{background:white;border-radius:10px;padding:22px;width:100%;max-width:650px;max-height:90vh;overflow:auto;box-shadow:0 10px 25px rgba(0,0,0,0.15)}
+    .step-list{margin-top:6px;padding:0;list-style:none}
+    .step-list li{font-size:12px;margin-bottom:4px;padding-bottom:4px;border-bottom:1px dashed #e2e8f0}
+    footer{text-align:center;color:#94a3b8;font-size:12px;padding:24px}
+    @media(max-width:768px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<header>
+  <h1>HRD Certificate Request & Approval System</h1>
+  <p>DepEd Schools Division of Laguna · Public Portal & HRD Operations</p>
+  <p id="identity" style="font-size:12px;margin-top:8px;color:#cbd5e1">Public request portal</p>
+</header>
+
+<main>
+  <div id="notice"></div>
+
+  <div class="tabs">
+    <button id="publicTab" onclick="showPage('public')">Request / Track</button>
+    <button id="staffTab" onclick="showPage('staff')">Staff Sign-in</button>
+    <button id="dashboardTab" class="hidden" onclick="showPage('dashboard')">Staff Dashboard</button>
+  </div>
+
+  <section id="publicPage">
+    <div class="panel">
+      <h2>Submit a Certificate Request</h2>
+      
+      <div class="info-box">
+        <b>📧 Mandatory File Submission via Email:</b><br>
+        1. Email your attached supporting documents (Division Memo, Program Matrix, Participant List, Speaker List) to <b>hrds.laguna@deped.gov.ph</b>.<br>
+        <div style="margin-top:10px;">
+          <a id="emailButton" href="mailto:hrds.laguna@deped.gov.ph?subject=Certificate%20Request%20Supporting%20Documents" target="_blank" style="display:inline-block;background:#2563eb;color:white;padding:8px 14px;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;">✉️ Send Supporting Documents to hrds.laguna@deped.gov.ph</a>
+        </div>
+        <br>2. <b>Submission Lead Time Policy:</b> Submissions must be made <b>at least 5 days prior</b> to the event. Submissions fewer than 5 days before start will be classified as <b>URGENT</b>.
+      </div>
+
+      <form id="requestForm" onsubmit="submitPublic(event)">
+        <div class="grid">
+          <div class="field"><label>Proponent Name *</label><input name="proponentName" required maxlength="150"></div>
+          <div class="field"><label>Email Address *</label><input name="proponentEmail" type="email" required maxlength="200"></div>
+          <div class="field"><label>Office / School *</label><input name="officeSchool" required maxlength="200"></div>
+          <div class="field"><label>Activity Type *</label>
+            <select name="activityType" required>
+              <option value="">Select type</option><option>Training</option><option>Seminar</option>
+              <option>Workshop</option><option>Conference</option><option>Program / Project</option><option>Other</option>
+            </select>
+          </div>
+          <div class="field full"><label>Activity / Program Title *</label><input name="activityTitle" required maxlength="250"></div>
+          
+          <div class="field full">
+            <label>Select Certificate Type(s) & Requested Quantity *</label>
+            <div class="cert-card-grid">
+              <div class="cert-card" id="card_Participation">
+                <div>
+                  <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                    <input type="checkbox" onchange="toggleCertCard('Participation', this.checked)">
+                    <b>Participation</b>
+                  </label>
+                </div>
+                <div><input type="number" id="qty_Participation" min="1" disabled placeholder="Qty" style="font-size:12px;"></div>
+              </div>
+
+              <div class="cert-card" id="card_Completion">
+                <div>
+                  <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                    <input type="checkbox" onchange="toggleCertCard('Completion', this.checked)">
+                    <b>Completion</b>
+                  </label>
+                </div>
+                <div><input type="number" id="qty_Completion" min="1" disabled placeholder="Qty" style="font-size:12px;"></div>
+              </div>
+
+              <div class="cert-card" id="card_Recognition">
+                <div>
+                  <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                    <input type="checkbox" onchange="toggleCertCard('Recognition', this.checked)">
+                    <b>Recognition</b>
+                  </label>
+                </div>
+                <div><input type="number" id="qty_Recognition" min="1" disabled placeholder="Qty" style="font-size:12px;"></div>
+              </div>
+
+              <div class="cert-card" id="card_Appreciation">
+                <div>
+                  <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                    <input type="checkbox" onchange="toggleCertCard('Appreciation', this.checked)">
+                    <b>Appreciation</b>
+                  </label>
+                </div>
+                <div><input type="number" id="qty_Appreciation" min="1" disabled placeholder="Qty" style="font-size:12px;"></div>
+              </div>
+
+              <div class="cert-card" id="card_Appearance">
+                <div>
+                  <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                    <input type="checkbox" onchange="toggleCertCard('Appearance', this.checked)">
+                    <b>Appearance</b>
+                  </label>
+                </div>
+                <div><input type="number" id="qty_Appearance" min="1" disabled placeholder="Qty" style="font-size:12px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="field"><label>Activity Start Date *</label><input name="activityStart" id="activityStartInput" type="date" required onchange="calculateUrgencyPreview()"></div>
+          <div class="field"><label>Activity End Date</label><input name="activityEnd" type="date"></div>
+          <div class="field full"><label>Urgency Lead Time Preview</label><div id="urgencyPreview" class="badge">Select Activity Start Date to compute lead time</div></div>
+          <div class="field full"><label>Notes / Special Instructions</label><textarea name="notes" maxlength="3000"></textarea></div>
+
+          <div class="field full" style="margin-top:10px">
+            <label style="font-weight:600;color:#1e40af;display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" name="emailAttachmentConfirmed" required value="true" style="width:auto;">
+              I confirm that I have emailed the required supporting document attachments to hrds.laguna@deped.gov.ph *
+            </label>
+          </div>
+        </div>
+        <div class="actions" style="margin-top:18px"><button id="submitBtn" type="submit">Submit Request</button></div>
+      </form>
+    </div>
+
+    <div class="panel">
+      <h2>Track Status of a Request</h2>
+      <p class="muted">Enter your Request ID or assigned Control Number to track progress and view audit history.</p>
+      <form onsubmit="trackRequest(event)">
+        <div class="grid">
+          <div class="field full"><label>Request ID or Control Number *</label><input id="trackQuery" required placeholder="e.g. REQ-ABC123 or HRD-CERT-2026-00001-PART-1"></div>
+        </div>
+        <div class="actions" style="margin-top:12px"><button type="submit">Track Request</button></div>
+      </form>
+      <div id="trackingResult" style="margin-top:15px"></div>
+    </div>
+  </section>
+
+  <section id="staffPage" class="hidden">
+    <div class="panel">
+      <h2>Authorized Staff Sign-in</h2>
+      <form onsubmit="staffLogin(event)">
+        <div class="grid">
+          <div class="field"><label>Organizational Email</label><input id="staffEmail" type="email" required autocomplete="username"></div>
+          <div class="field"><label>Password</label><input id="staffPassword" type="password" required autocomplete="current-password"></div>
+        </div>
+        <div class="actions" style="margin-top:12px"><button id="loginBtn" type="submit">Sign In</button></div>
+      </form>
+    </div>
+  </section>
+
+  <section id="dashboardPage" class="hidden">
+    <div class="toolbar">
+      <button onclick="loadDashboard()">Refresh Data</button>
+      <button class="teal" onclick="openReportsAnalytics()">Reports & Analytics</button>
+      <button class="secondary" onclick="exportReport()">Export Report CSV</button>
+      <button class="secondary" onclick="downloadTransactionBackup()">Download Transaction Backup</button>
+      <button id="manageStaffBtn" class="secondary hidden" onclick="toggleStaffAccountPanel()">Manage Staff Accounts</button>
+      <button class="secondary" onclick="logout()">Sign Out</button>
+      <input id="staffSearch" class="search" placeholder="Search requests or proponents…" oninput="renderDashboard()">
+    </div>
+
+    <section id="staffAccountPanel" class="panel hidden">
+      <h2>Staff Account Management</h2>
+      <form id="staffAccountForm" onsubmit="createStaffAccountSubmit(event)">
+        <div class="grid">
+          <div class="field"><label for="staffCreateEmail">Staff Email *</label><input id="staffCreateEmail" type="email" required maxlength="200"></div>
+          <div class="field"><label for="staffCreateName">Full Name *</label><input id="staffCreateName" type="text" required maxlength="150"></div>
+          <div class="field"><label for="staffCreateRole">Role *</label>
+            <select id="staffCreateRole" required onchange="toggleApproverStepField()">
+              <option value="">Select role</option><option value="HRD">HRD Personnel</option><option value="APPROVER">Approver</option><option value="ADMIN">Administrator</option>
+            </select>
+          </div>
+          <div class="field"><label for="staffCreateOffice">Office / Section</label><input id="staffCreateOffice" type="text" maxlength="200"></div>
+          <div id="approverStepGroup" class="field hidden"><label for="staffCreateApprovalStep">Approver Step *</label>
+            <select id="staffCreateApprovalStep"><option value="">Select step</option><option value="1">Approver 1</option><option value="2">Approver 2</option><option value="3">Approver 3</option><option value="4">Approver 4</option></select>
+          </div>
+          <div class="field"><label for="staffCreatePassword">Password * (min 12 chars)</label><input id="staffCreatePassword" type="password" minlength="12" required></div>
+          <div class="field"><label for="staffCreateConfirmPassword">Confirm Password *</label><input id="staffCreateConfirmPassword" type="password" minlength="12" required></div>
+        </div>
+        <div class="actions" style="margin-top:14px"><button id="createStaffBtn" type="submit">Create Account</button></div>
+        <p id="staffAccountMessage" class="muted" role="status"></p>
+      </form>
+    </section>
+
+    <div class="stats">
+      <div class="stat"><span>Total Requests</span><strong id="sTotal">0</strong></div>
+      <div class="stat"><span>In Progress</span><strong id="sPending">0</strong></div>
+      <div class="stat"><span>Released</span><strong id="sReleased">0</strong></div>
+    </div>
+
+    <div class="panel">
+      <h2>Staff Operations Dashboard</h2>
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Request ID & Date</th>
+              <th>Activity Title & Proponent</th>
+              <th>Urgency & Status</th>
+              <th>Requested Certificates</th>
+              <th>Approval Progress</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="staffTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="modalRoot" class="hidden"></div>
+<footer>HRD Certificate Request & Approval Management System · DepEd Laguna</footer>
+
+<script>
+let staffToken = sessionStorage.getItem('hrd_staff_token') || '';
+let staffUser = JSON.parse(sessionStorage.getItem('hrd_staff_user') || 'null');
+let staffRequests = [];
+
+window.addEventListener('DOMContentLoaded', () => {
+  if (staffToken && staffUser) {
+    document.getElementById('identity').textContent = staffUser.fullName + ' · ' + staffUser.role;
+    document.getElementById('dashboardTab').classList.remove('hidden');
+    showPage('dashboard');
+  }
+});
+
+function toggleCertCard(type, isChecked) {
+  const card = document.getElementById('card_' + type);
+  const input = document.getElementById('qty_' + type);
+  card.classList.toggle('selected', isChecked);
+  input.disabled = !isChecked;
+  if (isChecked) {
+    if (!input.value || Number(input.value) <= 0) input.value = 1;
+    input.focus();
+  } else {
+    input.value = '';
+  }
+}
+
+function calculateUrgencyPreview() {
+  const input = document.getElementById('activityStartInput').value;
+  const preview = document.getElementById('urgencyPreview');
+  if (!input) {
+    preview.className = 'badge';
+    preview.textContent = 'Select Activity Start Date to compute lead time';
+    return;
+  }
+  const startDate = new Date(input).setHours(0,0,0,0);
+  const today = new Date().setHours(0,0,0,0);
+  const diffDays = Math.ceil((startDate - today) / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 5) {
+    preview.className = 'badge urgent';
+    preview.textContent = `⚠️ URGENT: ${diffDays < 0 ? 'Past Event' : diffDays + ' day(s) lead time (Less than 5 days requirement)'}`;
+  } else {
+    preview.className = 'badge timely';
+    preview.textContent = `🟢 NORMAL: ${diffDays} day(s) lead time (Meets >=5 days requirement)`;
+  }
+}
+
+function esc(v) {
+  return String(v == null ? '' : v).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+function msg(text, type='error') {
+  const el = document.getElementById('notice');
+  el.className = 'notice ' + type;
+  el.textContent = text;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function clearMsg() {
+  const el = document.getElementById('notice');
+  el.className = '';
+  el.textContent = '';
+}
+
+function publicCall(name, payload, success) {
+  google.script.run
+    .withSuccessHandler(success)
+    .withFailureHandler(e => msg(e && e.message ? e.message : String(e)))[name](...(payload === undefined ? [] : [payload]));
+}
+
+function staffCall(name, payload, success) {
+  if (!staffToken) {
+    msg('Your staff session has expired. Please sign in again.');
+    logout();
+    return;
+  }
+  const args = [staffToken];
+  if (payload !== undefined) args.push(payload);
+
+  google.script.run
+    .withSuccessHandler(success)
+    .withFailureHandler(e => {
+      const text = e && e.message ? e.message : String(e);
+      msg(text);
+      if (/session has expired|permissions changed/i.test(text)) logout();
+    })[name](...args);
+}
+
+function showPage(page) {
+  clearMsg();
+  ['public','staff','dashboard'].forEach(p =>
+    document.getElementById(p+'Page').classList.toggle('hidden',p!==page)
+  );
+  if (page !== 'dashboard') document.getElementById('staffAccountPanel').classList.add('hidden');
+  if (page === 'dashboard' && staffToken) loadDashboard();
+}
+
+function toggleStaffAccountPanel() {
+  if (!staffUser || staffUser.role !== 'ADMIN') return msg('Only an administrator can manage staff accounts.');
+  document.getElementById('staffAccountPanel').classList.toggle('hidden');
+}
+
+function toggleApproverStepField() {
+  const isApprover = document.getElementById('staffCreateRole').value === 'APPROVER';
+  const group = document.getElementById('approverStepGroup');
+  const select = document.getElementById('staffCreateApprovalStep');
+  group.classList.toggle('hidden', !isApprover);
+  select.required = isApprover;
+  if (!isApprover) select.value = '';
+}
+
+function submitPublic(e) {
+  e.preventDefault();
+  clearMsg();
+
+  const certDetails = {
+    'Certificate of Participation': Number(document.getElementById('qty_Participation').value || 0),
+    'Certificate of Completion': Number(document.getElementById('qty_Completion').value || 0),
+    'Certificate of Recognition': Number(document.getElementById('qty_Recognition').value || 0),
+    'Certificate of Appreciation': Number(document.getElementById('qty_Appreciation').value || 0),
+    'Certificate of Appearance': Number(document.getElementById('qty_Appearance').value || 0)
+  };
+
+  if (Object.values(certDetails).reduce((a, b) => a + b, 0) <= 0) {
+    msg('Please select and enter a quantity for at least one certificate type.');
+    return;
+  }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+
+  const payload = Object.fromEntries(new FormData(e.target).entries());
+  payload.certDetails = certDetails;
+
+  publicCall('apiSubmitPublic', payload, result => {
+    btn.disabled = false;
+    e.target.reset();
+    ['Participation','Completion','Recognition','Appreciation','Appearance'].forEach(id => toggleCertCard(id, false));
+    calculateUrgencyPreview();
+
+    document.getElementById('trackingResult').innerHTML =
+      '<div class="panel"><h3>Request Submitted Successfully!</h3>' +
+      '<p>Your Request ID: <b>'+esc(result.requestId)+'</b></p>' +
+      '<p class="muted">'+(result.confirmationEmailSent ? 'Confirmation email sent to your email address.' : 'Request saved, but confirmation email could not be sent. Please contact HRD.')+'</p>' +
+      '<p class="muted">'+(result.hrdEmailSent ? 'HRD notification sent to hrds.laguna@deped.gov.ph.' : 'HRD notification email failed. HRD must be notified manually.')+'</p></div>';
+
+    document.getElementById('trackQuery').value = result.requestId;
+    msg(result.hrdEmailSent ? 'Request submitted and HRD email notification sent. Save your Request ID for tracking.' : 'Request saved, but the HRD email notification failed. Please contact HRD manually.', result.hrdEmailSent ? 'success' : 'error');
+  });
+
+  setTimeout(() => btn.disabled = false, 1500);
+}
+
+function trackRequest(e) {
+  e.preventDefault();
+  const query = document.getElementById('trackQuery').value.trim();
+  document.getElementById('trackingResult').textContent = 'Searching...';
+
+  publicCall('apiTrackPublic', query, renderTracking);
+}
+
+function formatTrailDate(value) {
+  if (!value) return '';
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return String(value);
+  return d.toLocaleString('en-PH', { timeZone:'Asia/Manila', year:'numeric', month:'short', day:'numeric', hour:'numeric', minute:'2-digit', hour12:true });
+}
+
+function certificateBreakdownTable(items, fallbackControlNumbers) {
+  items = Array.isArray(items) ? items : [];
+  if (!items.length) return '<p class="muted">Certificate quantities are not available for this request.</p>';
+  return '<div class="table-container"><table class="data-table"><thead><tr><th>Certificate Type</th><th>Quantity</th><th>Current Status</th><th>Control Number(s)</th></tr></thead><tbody>' +
+    items.map(item => '<tr><td>'+esc(item.type)+'</td><td>'+esc(item.quantity)+'</td><td>'+esc(item.status || 'Pending')+'</td><td><small style="word-break:break-word">'+esc((item.controlNumbers || []).join(', ') || (fallbackControlNumbers && item.status === 'Released' ? fallbackControlNumbers : 'Not assigned yet'))+'</small></td></tr>').join('') +
+    '</tbody></table></div>';
+}
+
+function renderTracking(r) {
+  clearMsg();
+  const isReturned = ['Returned to Proponent', 'Returned for Revision'].includes(r.status);
+  const isDisapproved = r.status === 'Disapproved';
+
+  let reasonHtml = '';
+  if ((isReturned || isDisapproved) && r.returnReason) {
+    reasonHtml = '<div class="reason-box">⚠️ <b>Feedback / Instructions:</b><br>' + esc(r.returnReason) + '</div>';
+  }
+
+  let resubmitHtml = '';
+  if (isReturned) {
+    resubmitHtml = '<div class="resubmit-panel">' +
+      '<h3 style="margin-top:0;color:#92400e;">🔄 Resubmit Request</h3>' +
+      '<p style="font-size:13px;color:#78350f;">Click below once you have emailed your updated files to HRD.</p>' +
+      '<button class="teal" id="resubmitBtn" onclick="resubmitRequest(\''+esc(r.requestId)+'\')">I have emailed my updated files — Resubmit Request</button>' +
+    '</div>';
+  }
+
+  const auditHtml = (r.auditTrail || []).map(a =>
+    '<div style="font-size:13px;border-bottom:1px solid #e2e8f0;padding:10px 0;">' +
+      '<b>'+esc(a.action)+'</b><br>' +
+      '<small class="muted">'+esc(formatTrailDate(a.timestamp))+'</small>' +
+      (a.details ? '<div style="margin-top:3px;">'+esc(a.details)+'</div>' : '') +
+    '</div>'
+  ).join('');
+
+  document.getElementById('trackingResult').innerHTML =
+    '<div class="panel"><h3>'+esc(r.activityTitle)+'</h3>' +
+    '<p><span class="status '+(r.status==='Released'?'good':(isReturned||isDisapproved)?'bad':'warn')+'">'+esc(r.status)+'</span> ' +
+    '<span class="badge '+(r.urgencyStatus.includes('URGENT')?'urgent':'timely')+'">'+esc(r.urgencyStatus)+'</span></p>' +
+    reasonHtml +
+    '<div class="grid" style="margin:12px 0;">' +
+      '<div><b>Tracking Number:</b> '+esc(r.requestId)+'</div>' +
+      '<div><b>Date Requested:</b> '+esc(r.submittedAt)+'</div>' +
+      '<div><b>Proponent:</b> '+esc(r.proponentName)+' ('+esc(r.proponentEmail)+')</div>' +
+      '<div><b>Office / School:</b> '+esc(r.officeSchool)+'</div>' +
+      '<div class="full"><b>Certificates Requested (Total: '+esc(r.totalQuantity)+')</b>' + certificateBreakdownTable(r.certificateBreakdown, r.controlNumber) + '</div>' +
+    '</div>' +
+    '<h4>Approval Progress</h4>' +
+    r.approvalProgress.map(a =>
+      '<div class="approval"><span>Step '+esc(a.step)+': '+esc(a.name)+'</span><b>'+esc(a.decision)+'</b></div>'
+    ).join('') +
+    '<h4>Request History</h4><p class="muted" style="font-size:12px;">Updates are shown as the request moves from submission to draft, approval, revision, and release.</p>' + (auditHtml || '<p class="muted">Request submitted on '+esc(formatTrailDate(r.submittedAt))+'.</p>') +
+    (r.finalURL ? '<p style="margin-top:14px;"><a href="'+esc(r.finalURL)+'" target="_blank" rel="noopener">Download Released Certificates ↗</a></p>' : '') +
+    resubmitHtml +
+    '</div>';
+}
+
+function resubmitRequest(id) {
+  clearMsg();
+  const btn = document.getElementById('resubmitBtn');
+  if (btn) btn.disabled = true;
+
+  publicCall('apiResubmitPublic', id, res => {
+    msg('Request resubmitted successfully! Audit trail updated.', 'success');
+    document.getElementById('trackQuery').value = id;
+    trackRequest({ preventDefault: () => {} });
+  });
+}
+
+function staffLogin(e) {
+  e.preventDefault();
+  clearMsg();
+
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true;
+
+  google.script.run
+    .withSuccessHandler(result => {
+      btn.disabled = false;
+      staffToken = result.token;
+      staffUser = result.user;
+
+      sessionStorage.setItem('hrd_staff_token', staffToken);
+      sessionStorage.setItem('hrd_staff_user', JSON.stringify(staffUser));
+
+      document.getElementById('staffPassword').value = '';
+      document.getElementById('identity').textContent = staffUser.fullName+' · '+staffUser.role;
+      document.getElementById('dashboardTab').classList.remove('hidden');
+      msg('Signed in successfully.', 'success');
+      showPage('dashboard');
+    })
+    .withFailureHandler(err => {
+      btn.disabled = false;
+      msg(err && err.message ? err.message : String(err));
+    }).apiStaffLogin(document.getElementById('staffEmail').value.trim(), document.getElementById('staffPassword').value);
+}
+
+function logout() {
+  const oldToken = staffToken;
+  staffToken = ''; staffUser = null; staffRequests = [];
+  sessionStorage.removeItem('hrd_staff_token');
+  sessionStorage.removeItem('hrd_staff_user');
+
+  document.getElementById('dashboardTab').classList.add('hidden');
+  document.getElementById('manageStaffBtn').classList.add('hidden');
+  document.getElementById('staffAccountPanel').classList.add('hidden');
+  document.getElementById('identity').textContent = 'Public request portal';
+  showPage('public');
+
+  if (oldToken) google.script.run.apiStaffLogout(oldToken);
+}
+
+function loadDashboard() {
+  staffCall('apiStaffBootstrap', undefined, data => {
+    staffUser = data.user;
+    staffRequests = data.requests || [];
+
+    document.getElementById('identity').textContent = staffUser.fullName+' · '+staffUser.role;
+    document.getElementById('manageStaffBtn').classList.toggle('hidden', staffUser.role !== 'ADMIN');
+
+    document.getElementById('sTotal').textContent = staffRequests.length;
+    document.getElementById('sPending').textContent = staffRequests.filter(r=>!['Released','Disapproved'].includes(r.status)).length;
+    document.getElementById('sReleased').textContent = staffRequests.filter(r=>r.status==='Released').length;
+
+    renderDashboard();
+  });
+}
+
+function renderDashboard() {
+  if (!staffUser) return;
+  const q = document.getElementById('staffSearch').value.toLowerCase();
+
+  const rows = staffRequests.filter(r =>
+    [r.requestId,r.activityTitle,r.proponentName,r.proponentEmail,
+     r.officeSchool,r.status,r.controlNumber,r.certificateTypes,r.urgencyStatus].join(' ').toLowerCase().includes(q)
+  );
+
+  document.getElementById('staffTableBody').innerHTML = rows.length
+    ? rows.map(tableRow).join('')
+    : '<tr><td colspan="6" class="muted" style="text-align:center;padding:20px;">No requests found.</td></tr>';
+}
+
+function tableRow(r) {
+  const isHrd = ['ADMIN','HRD'].includes(staffUser.role);
+  const isApproverRole = ['APPROVER', 'ADMIN'].includes(staffUser.role);
+
+  const myApproval = (r.approvals || []).find(a =>
+    (a.email.toLowerCase() === staffUser.email.toLowerCase() || Number(a.step) === Number(staffUser.step) || staffUser.role === 'ADMIN') &&
+    a.decision === 'Pending'
+  );
+
+  const isReturned = ['Returned to Proponent', 'Returned for Revision', 'Disapproved'].includes(r.status);
+  
+  let actions = '<button class="secondary" style="padding:5px 9px;font-size:12px;" onclick="details(\''+esc(r.requestId)+'\')">Audit</button>';
+
+  if (isHrd && !['Released','Disapproved'].includes(r.status)) {
+    actions += '<button style="padding:5px 9px;font-size:12px;margin-left:4px;" onclick="hrdForm(\''+esc(r.requestId)+'\')">HRD</button>';
+  }
+
+  if (isApproverRole && myApproval && r.status === 'Awaiting Approvals') {
+    actions += '<button class="teal" style="padding:5px 9px;font-size:12px;margin-left:4px;" onclick="decisionForm(\''+esc(r.requestId)+'\')">Review / Decide</button>';
+  }
+
+  if (isHrd && r.status === 'Approved - For Release') {
+    actions += '<button class="teal" style="padding:5px 9px;font-size:12px;margin-left:4px;" onclick="releaseForm(\''+esc(r.requestId)+'\')">Release</button>';
+  }
+
+  const certBadges = (r.certificateTypes || '').split(',').map(c => `<span class="badge" style="margin:2px;">${esc(c.trim())}</span>`).join('');
+
+  return '<tr>' +
+    '<td><b>'+esc(r.requestId)+'</b><br><small class="muted">Req: '+esc(r.submittedAt)+'</small></td>' +
+    '<td><b>'+esc(r.activityTitle)+'</b><br><small>'+esc(r.proponentName)+' ('+esc(r.officeSchool)+')</small></td>' +
+    '<td><span class="status '+(r.status==='Released'?'good':isReturned?'bad':'warn')+'">'+esc(r.status)+'</span><br>' +
+      '<span class="badge '+(r.urgencyStatus.includes('URGENT')?'urgent':'timely')+'" style="margin-top:4px;">'+esc(r.urgencyStatus)+'</span></td>' +
+    '<td><small><b>Total Certificates: '+esc(r.totalQuantity)+'</b></small><br>'+certBadges+'</td>' +
+    '<td><ul class="step-list">'+r.approvals.map(a => '<li>Step '+a.step+': <b>'+a.decision+'</b></li>').join('')+'</ul></td>' +
+    '<td>'+actions+'</td>' +
+    '</tr>';
+}
+
+function exportReport() {
+  staffCall('apiExportSummaryReport', undefined, csv => {
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `HRD_Certificate_Requests_Report_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+}
+
+function openReportsAnalytics() {
+  staffCall('apiGetAnalytics', undefined, a => {
+    modal('Reports & Analytics',
+      '<div class="stats">' +
+        '<div class="stat"><span>Total Requests</span><strong>'+esc(a.totalRequests)+'</strong></div>' +
+        '<div class="stat"><span>Urgent Requests</span><strong>'+esc(a.urgentRequests)+'</strong></div>' +
+        '<div class="stat"><span>Released</span><strong>'+esc(a.releasedRequests)+'</strong></div>' +
+      '</div><h3>Requests by Status</h3>' +
+      '<div class="table-container"><table class="data-table"><thead><tr><th>Status</th><th>Count</th></tr></thead><tbody>' +
+      a.byStatus.map(x=>'<tr><td>'+esc(x.status)+'</td><td>'+esc(x.count)+'</td></tr>').join('') +
+      '</tbody></table></div><h3>Requested Quantity by Certificate Type</h3>' +
+      '<div class="table-container"><table class="data-table"><thead><tr><th>Certificate Type</th><th>Quantity</th></tr></thead><tbody>' +
+      a.byCertificateType.map(x=>'<tr><td>'+esc(x.type)+'</td><td>'+esc(x.quantity)+'</td></tr>').join('') +
+      '</tbody></table></div><p class="muted">Generated: '+esc(a.generatedAt)+'</p>' +
+      '<div class="actions"><button onclick="exportReport()">Download CSV Report</button><button class="secondary" onclick="downloadTransactionBackup()">Download Transaction Backup</button></div>'
+    );
+  });
+}
+
+function downloadTransactionBackup() {
+  if (!staffUser || !['ADMIN','HRD'].includes(staffUser.role)) {
+    msg('Only Admin or HRD can download transaction backups.');
+    return;
+  }
+  staffCall('apiExportTransactionBackup', undefined, data => {
+    const blob = new Blob([data], {type:'application/json;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `HRD_Certificate_Transaction_Backup_${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    msg('Transaction backup downloaded. Store it securely with official records.', 'success');
+  });
+}
+
+function modal(title, body) {
+  const root = document.getElementById('modalRoot');
+  root.classList.remove('hidden');
+  root.innerHTML = '<div class="modalbg" onclick="if(event.target===this)closeModal()">' +
+    '<div class="modal"><h2>'+esc(title)+'</h2>'+body+
+    '<div class="actions" style="margin-top:16px"><button class="secondary" onclick="closeModal()">Close</button></div></div></div>';
+}
+
+function closeModal() {
+  const root=document.getElementById('modalRoot');
+  root.classList.add('hidden');
+  root.innerHTML='';
+}
+
+function details(id) {
+  staffCall('apiGetAudit', id, rows => {
+    modal('Audit Trail · '+id,
+      '<p class="muted">Tracking Number: <b>'+esc(id)+'</b></p>' + rows.slice().reverse().map(a=>
+        '<div style="font-size:13px;border-bottom:1px solid #e2e8f0;padding:10px 0;"><b>'+esc(a.Action)+'</b><br><small class="muted">'+esc(formatTrailDate(a.Timestamp))+'</small>'+(a.Details?'<div style="margin-top:3px;">'+esc(a.Details)+'</div>':'')+'</div>'
+      ).join('') || '<p class="muted">No trail entries yet.</p>'
+    );
+  });
+}
+
+function hrdForm(id) {
+  const r=staffRequests.find(x=>x.requestId===id);
+  modal('HRD Processing', '<p><b>'+esc(r.activityTitle)+'</b></p>' +
+    '<h3>Requested Certificates (Total: '+esc(r.totalQuantity)+')</h3>'+certificateBreakdownTable(r.certificateBreakdown, r.controlNumber) +
+    '<div class="field"><label>HRD Assignee Email</label><input id="assignee" value="'+esc(r.hrdAssignee||staffUser.email)+'"></div>' +
+    '<div class="field" style="margin-top:10px"><label>Draft Certificate URL</label><input id="draftURL" type="url" value="'+esc(r.draftURL||'')+'"></div>' +
+    '<div class="field" style="margin-top:10px"><label>Comments / Revision Instructions</label><textarea id="hrdComments"></textarea></div>' +
+    '<div class="actions" style="margin-top:14px">' +
+    '<button onclick="hrdSave(\''+esc(id)+'\',\'Prepare Draft\')">Save Draft</button>' +
+    '<button class="teal" onclick="hrdSave(\''+esc(id)+'\',\'Send for Approval\')">Route for Approval</button>' +
+    '<button class="secondary" onclick="hrdSave(\''+esc(id)+'\',\'Return to Proponent\')">Return to Proponent</button>' +
+    '<button class="red" onclick="hrdSave(\''+esc(id)+'\',\'Disapprove Request\')">Disapprove</button></div>'
+  );
+}
+
+function hrdSave(id, action) {
+  staffCall('apiHRDAction', {
+    requestId:id, action:action,
+    assignee:document.getElementById('assignee').value.trim(),
+    draftURL:document.getElementById('draftURL').value.trim(),
+    comments:document.getElementById('hrdComments').value.trim()
+  }, () => { closeModal(); msg('HRD action saved.', 'success'); loadDashboard(); });
+}
+
+function decisionForm(id) {
+  const r=staffRequests.find(x=>x.requestId===id);
+  modal('Approver Decision', '<p><b>'+esc(r.activityTitle)+'</b></p>' +
+    '<h3>Requested Certificates (Total: '+esc(r.totalQuantity)+')</h3>'+certificateBreakdownTable(r.certificateBreakdown, r.controlNumber) +
+    (r.draftURL?'<p><a href="'+esc(r.draftURL)+'" target="_blank" rel="noopener">Draft certificate ↗</a></p>':'')+
+    '<div class="field"><label>Decision</label><select id="decision"><option>Approved</option><option>Returned for Revision</option><option>Disapproved</option></select></div>' +
+    '<div class="field" style="margin-top:10px"><label>Reason / Comments (Required for Return or Disapproval)</label><textarea id="decisionComments"></textarea></div>' +
+    '<div class="actions" style="margin-top:14px"><button class="teal" onclick="decisionSave(\''+esc(id)+'\')">Submit Decision</button></div>'
+  );
+}
+
+function decisionSave(id) {
+  const decision = document.getElementById('decision').value;
+  const comments = document.getElementById('decisionComments').value.trim();
+  if (decision !== 'Approved' && !comments) return msg('Comments are required for return or disapproval.');
+
+  staffCall('apiApproverDecision', { requestId:id, decision:decision, comments:comments }, () => {
+    closeModal(); msg('Decision recorded.', 'success'); loadDashboard();
+  });
+}
+
+function releaseForm(id) {
+  modal('Release Certificate', '<p>Individual control numbers will be generated per requested certificate upon release confirmation.</p>' +
+    '<div class="field"><label>Final Certificate Link</label><input id="finalURL" type="url" required></div>' +
+    '<div class="actions" style="margin-top:14px"><button class="teal" onclick="releaseSave(\''+esc(id)+'\')">Confirm Release & Issue Control Numbers</button></div>'
+  );
+}
+
+function releaseSave(id) {
+  const finalURL=document.getElementById('finalURL').value.trim();
+  if (!finalURL) return msg('Enter the final certificate URL.');
+
+  staffCall('apiReleaseCertificate', {requestId:id,finalURL:finalURL}, () => {
+    closeModal(); msg('Certificate released and control numbers generated.', 'success'); loadDashboard();
+  });
+}
+
+publicCall('apiPublicInfo', undefined, info => {
+  if (!info.enabled) document.getElementById('publicPage').innerHTML = '<div class="panel"><h2>Portal temporarily unavailable</h2></div>';
+});
+</script>
+</body>
+</html>
